@@ -35,7 +35,12 @@ void mic_array_init_time_domain_frame(
         streaming chanend c_from_decimator[], unsigned decimator_count,
         unsigned &buffer, mic_array_frame_time_domain audio[],
         mic_array_decimator_config_t dc[]){
-
+#if DEBUG_MIC_ARRAY
+    for(unsigned i=0;i<decimator_count;i++){
+        if(dc[i].channel_count != 4)
+            fail("Decimator count not set to four as it should be");
+    }
+#endif     
     unsigned frames=1;
     mic_array_decimator_buffering_t buffering_type;
     unsafe {buffering_type = dc[0].dcc->buffering_type;}
@@ -143,7 +148,12 @@ mic_array_frame_time_domain * alias mic_array_get_next_time_domain_frame(
 
 void mic_array_init_frequency_domain_frame(streaming chanend c_from_decimator[], unsigned decimator_count,
      unsigned &buffer, mic_array_frame_fft_preprocessed f_fft_preprocessed[], mic_array_decimator_config_t dc[]){
-
+#if DEBUG_MIC_ARRAY
+    for(unsigned i=0;i<decimator_count;i++){
+        if(dc[i].channel_count != 4)
+            fail("Decimator count not set to four as it should be");
+    }
+#endif 
      unsigned frames;
      mic_array_decimator_buffering_t buffering_type;
      unsafe {buffering_type = dc[0].dcc->buffering_type;}
