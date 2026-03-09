@@ -36,6 +36,9 @@ typedef struct
      */
     int32_t *state;
 
+    int32_t *state0;
+    int32_t *state1;
+
     /**
      * @brief Final right-shift applied to the filter's accumulator prior to output.
      * @details

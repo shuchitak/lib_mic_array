@@ -32,6 +32,9 @@ static pdm_rx_resources_t pdm_res = PDM_RX_RESOURCES_SDR(
 void init_mic_conf(mic_array_conf_t *mic_array_conf, mic_array_filter_conf_t filter_conf[2], unsigned *channel_map)
 {
   static int32_t stg1_filter_state[APP_MIC_COUNT][8];
+  static int32_t stg1_filter_state0[APP_MIC_COUNT][8];
+  static int32_t stg1_filter_state1[APP_MIC_COUNT][8];
+
   static int32_t stg2_filter_state[APP_MIC_COUNT][SMALL_768K_TO_12K_FILTER_STG2_TAP_COUNT];
   memset(mic_array_conf, 0, sizeof(mic_array_conf_t));
 
@@ -43,6 +46,9 @@ void init_mic_conf(mic_array_conf_t *mic_array_conf, mic_array_filter_conf_t fil
   filter_conf[0].num_taps = SMALL_768K_TO_12K_FILTER_STG1_TAP_COUNT;
   filter_conf[0].decimation_factor = SMALL_768K_TO_12K_FILTER_STG1_DECIMATION_FACTOR;
   filter_conf[0].state = (int32_t*)stg1_filter_state;
+  filter_conf[0].state0 = (int32_t*)stg1_filter_state0;
+  filter_conf[0].state1 = (int32_t*)stg1_filter_state1;
+
   filter_conf[0].shr = SMALL_768K_TO_12K_FILTER_STG1_SHR;
   filter_conf[0].state_words_per_channel = filter_conf[0].num_taps/32; // works on 1-bit samples
   // filter stage 2
@@ -134,7 +140,7 @@ void user_audio(chanend_t c_mic_audio)
 void main_tile_1(){
     channel_t c_mic_audio = chan_alloc();
     xscope_mode_lossless();
-    
+
     // Parallel Jobs
     PAR_JOBS(
         PJOB(user_mic, (c_mic_audio.end_a)),
