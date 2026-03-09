@@ -9,6 +9,7 @@
 
 #include "xmath/xmath.h"
 #include "mic_array/etc/fir_1x16_bit.h"
+#include "par_decimator_subtask.h"
 
 // This has caused problems previously, so just catch the problems here.
 #if defined (MIC_COUNT)
@@ -162,6 +163,7 @@ void mic_array::TwoStageDecimator<MIC_COUNT>::Init(
   this->stage2.decimation_factor = decimator_conf.filter_conf[1].decimation_factor;
 }
 
+#if 0
 template <unsigned MIC_COUNT>
 void mic_array::TwoStageDecimator<MIC_COUNT>
     ::ProcessBlock(
@@ -182,7 +184,31 @@ void mic_array::TwoStageDecimator<MIC_COUNT>
   filter_fir_s32_add_sample(&this->stage2.filters[0], streamA_sample0);
   sample_out[0] = filter_fir_s32(&this->stage2.filters[0], streamA_sample1);
 }
+#endif
 
+
+template <unsigned MIC_COUNT>
+void mic_array::TwoStageDecimator<MIC_COUNT>
+    ::ProcessBlock(
+        int32_t sample_out[1],
+        uint32_t *pdm_block)
+{
+  uint32_t* hist0 = this->stage1.pdm_history_ptr0;
+  uint32_t* hist1 = this->stage1.pdm_history_ptr1;
+
+  hist0[0] = pdm_block[0];
+
+  hist1[1] = pdm_block[0];
+  hist1[0] = pdm_block[1];
+
+  int32_t output_samples[2];
+  par_decimator_subtask_run(output_samples, hist0, hist1, this->stage1.filter_coef);
+
+  shift_by_1_and_store_not_inplace(hist1, hist0);
+  shift_by_2_and_store_inplace(hist1);
+  filter_fir_s32_add_sample(&this->stage2.filters[0], output_samples[0]);
+  sample_out[0] = filter_fir_s32(&this->stage2.filters[0], output_samples[1]);
+}
 
 static inline
 void mic_array::shift_buffer(uint32_t* buff)
