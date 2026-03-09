@@ -135,6 +135,7 @@ void user_audio(chanend_t c_mic_audio)
     fclose(f);
     ma_shutdown(c_mic_audio);
     printf("Done\n");
+    _Exit(0);
 }
 
 void main_tile_1(){

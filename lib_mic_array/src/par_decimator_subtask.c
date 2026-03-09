@@ -4,7 +4,9 @@
 
 #include "xmath/xmath.h"
 #include "xcore/parallel.h"
+#include "xcore/chanend.h"
 #include "mic_array/etc/fir_1x16_bit.h"
+#include <xcore/select.h>
 
 DECLARE_JOB(par_decimator_subtask, (int32_t*, uint32_t*, const uint32_t*) );
 
@@ -27,4 +29,21 @@ void par_decimator_subtask(int32_t* sample_out,
   const uint32_t *s1_filter_coef )
 {
     *sample_out = fir_1x16_bit(hist, s1_filter_coef);
+}
+
+void decimator_1st_stage_1_sample(chanend_t c_decimator, uint32_t *hist, const uint32_t* s1_filter_coef)
+{
+    SELECT_RES(
+        CASE_THEN(c_decimator, event_new_sample)
+    )
+    {
+        event_new_sample:
+        {
+            hist[0] = chanend_in_word(c_decimator);
+            int32_t sample_out = fir_1x16_bit(hist, s1_filter_coef);
+            chanend_out_word(c_decimator, sample_out);
+            continue;
+        }
+    }
+
 }

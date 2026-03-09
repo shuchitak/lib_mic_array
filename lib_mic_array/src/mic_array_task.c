@@ -52,10 +52,16 @@ void default_ma_task_start_pdm(void)
   start_pdm_task();
 }
 
-DECLARE_JOB(default_ma_task_start_decimator, (void));
-void default_ma_task_start_decimator(void)
+DECLARE_JOB(default_ma_task_start_decimator, (chanend_t));
+void default_ma_task_start_decimator(chanend_t c_decimator)
 {
-  start_decimator_task();
+  start_decimator_task(c_decimator);
+}
+
+DECLARE_JOB(default_ma_task_start_decimator_first_stg_1_sample, (chanend_t));
+void default_ma_task_start_decimator_first_stg_1_sample(chanend_t c_decimator)
+{
+  start_decimator_task_first_stage_1_sample(c_decimator);
 }
 
 DECLARE_JOB(default_ma_task_start_pdm_3stg, (void));
@@ -76,6 +82,7 @@ void mic_array_start(chanend_t c_frames_out)
   start_mic_array_pdm_isr(c_frames_out);
 #else
   set_output_channel(c_frames_out);
+  channel_t c_decimator = chan_alloc();
   bool use_3_stg_decimator = get_decimator_stg_count();
   if (use_3_stg_decimator) {
     PAR_JOBS(
@@ -84,7 +91,8 @@ void mic_array_start(chanend_t c_frames_out)
   } else {
     PAR_JOBS(
       PJOB(default_ma_task_start_pdm, ()),
-      PJOB(default_ma_task_start_decimator, ()));
+      PJOB(default_ma_task_start_decimator, (c_decimator.end_a)),
+      PJOB(default_ma_task_start_decimator_first_stg_1_sample, (c_decimator.end_b)));
   }
 #endif // MIC_ARRAY_CONFIG_USE_PDM_ISR
 

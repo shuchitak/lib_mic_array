@@ -182,9 +182,16 @@ void start_pdm_task(void)
   s_mics->PdmRx.ThreadEntry();
 }
 
-void start_decimator_task(void)
+void start_decimator_task(chanend_t c_decimator)
 {
+  s_mics->Decimator.c_decimator = c_decimator;
   s_mics->ThreadEntry();
+}
+
+#include "par_decimator_subtask.h"
+void start_decimator_task_first_stage_1_sample(chanend_t c_decimator)
+{
+  decimator_1st_stage_1_sample(c_decimator, s_mics->Decimator.stage1.pdm_history_ptr0, s_mics->Decimator.stage1.filter_coef);
 }
 
 void start_pdm_task_3stg(void)

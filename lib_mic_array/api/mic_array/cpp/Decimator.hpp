@@ -52,6 +52,22 @@ class TwoStageDecimator
   private:
 
     /**
+     * Stage 2 decimation configuration and state.
+     */
+    struct {
+      /**
+       * Stage 2 FIR filters
+       */
+      filter_fir_s32_t filters[MIC_COUNT];
+      /**
+       * Stage 2 filter decimation factor.
+       */
+      unsigned decimation_factor;
+    } stage2;
+
+  public:
+    chanend_t c_decimator;
+    /**
      * Stage 1 decimator configuration and state.
      */
     struct {
@@ -73,22 +89,6 @@ class TwoStageDecimator
        */
       unsigned pdm_history_sz;
     } stage1;
-
-    /**
-     * Stage 2 decimation configuration and state.
-     */
-    struct {
-      /**
-       * Stage 2 FIR filters
-       */
-      filter_fir_s32_t filters[MIC_COUNT];
-      /**
-       * Stage 2 filter decimation factor.
-       */
-      unsigned decimation_factor;
-    } stage2;
-
-  public:
 
     constexpr TwoStageDecimator() noexcept { }
 
@@ -196,13 +196,17 @@ void mic_array::TwoStageDecimator<MIC_COUNT>
   uint32_t* hist0 = this->stage1.pdm_history_ptr0;
   uint32_t* hist1 = this->stage1.pdm_history_ptr1;
 
-  hist0[0] = pdm_block[0];
+  //hist0[0] = pdm_block[0];
+  chanend_out_word(this->c_decimator, pdm_block[0]);
 
   hist1[1] = pdm_block[0];
   hist1[0] = pdm_block[1];
 
   int32_t output_samples[2];
-  par_decimator_subtask_run(output_samples, hist0, hist1, this->stage1.filter_coef);
+  output_samples[1] = fir_1x16_bit(hist1, this->stage1.filter_coef);
+
+  //output_samples[0] = fir_1x16_bit(hist0, this->stage1.filter_coef);
+  output_samples[0] = chanend_in_word(this->c_decimator);
 
   shift_by_1_and_store_not_inplace(hist1, hist0);
   shift_by_2_and_store_inplace(hist1);
